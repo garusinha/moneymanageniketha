@@ -1,0 +1,1458 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Niketha's Finance Dashboard - FinPulse</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#f0fdf4",
+                100: "#dcfce7",
+                500: "#22c55e",
+                600: "#16a34a",
+                700: "#15803d",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Google Fonts Inter -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-slate-900 text-slate-100 min-h-screen flex flex-col transition-colors duration-200"
+  >
+    <!-- Header -->
+    <header
+      class="bg-slate-800/85 backdrop-blur-md border-b border-slate-700/60 sticky top-0 z-50"
+    >
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
+      >
+        <div class="flex items-center space-x-3">
+          <div
+            class="bg-gradient-to-tr from-emerald-500 to-teal-400 p-2.5 rounded-xl shadow-lg shadow-emerald-500/25"
+          >
+            <i class="fa-solid fa-wallet text-slate-950 font-bold text-lg"></i>
+          </div>
+          <div>
+            <span
+              class="text-xl font-bold bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent"
+              >FinPulse</span
+            >
+            <span
+              class="hidden sm:inline-block ml-2 text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              >Niketha's Dashboard</span
+            >
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3 sm:space-x-4">
+          <!-- Currency Selector -->
+          <select
+            id="currencySelector"
+            class="bg-slate-700 text-slate-200 text-sm rounded-lg px-3 py-1.5 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="Rs. ">LKR (Rs.)</option>
+            <option value="$">USD ($)</option>
+            <option value="€">EUR (€)</option>
+            <option value="£">GBP (£)</option>
+            <option value="¥">JPY (¥)</option>
+            <option value="₹">INR (₹)</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs Bar -->
+    <nav
+      class="bg-slate-800/50 border-b border-slate-700/60 backdrop-blur-sm sticky top-16 z-40"
+    >
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 sm:space-x-4 overflow-x-auto py-2"
+      >
+        <button
+          onclick="switchTab('dashboard')"
+          id="tabBtn-dashboard"
+          class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 bg-emerald-500 text-slate-950 shadow-md"
+        >
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </button>
+        <button
+          onclick="switchTab('transactions')"
+          id="tabBtn-transactions"
+          class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 text-slate-300 hover:text-white hover:bg-slate-700/60"
+        >
+          <i class="fa-solid fa-receipt"></i>
+          <span>Transactions</span>
+        </button>
+        <button
+          onclick="switchTab('passbook')"
+          id="tabBtn-passbook"
+          class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 text-slate-300 hover:text-white hover:bg-slate-700/60"
+        >
+          <i class="fa-solid fa-book"></i>
+          <span>Passbook Summary</span>
+        </button>
+        <button
+          onclick="switchTab('categories')"
+          id="tabBtn-categories"
+          class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 text-slate-300 hover:text-white hover:bg-slate-700/60"
+        >
+          <i class="fa-solid fa-tags"></i>
+          <span>Categories</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main
+      class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8"
+    >
+      <!-- Notification Toast Modal / Banner -->
+      <div
+        id="toast"
+        class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-xl flex items-center space-x-3"
+      >
+        <i id="toastIcon" class="fa-solid fa-check-circle text-lg"></i>
+        <span id="toastMessage" class="font-medium text-sm"
+          >Action completed successfully!</span
+        >
+      </div>
+
+      <!-- ================= TAB 1: DASHBOARD ================= -->
+      <div id="tabContent-dashboard" class="tab-content space-y-8">
+        <!-- Dashboard Summary Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Total Balance Card -->
+          <div
+            class="bg-slate-800/90 border border-slate-700/70 p-6 rounded-2xl shadow-xl relative overflow-hidden group hover:border-slate-600 transition"
+          >
+            <div
+              class="absolute -right-4 -bottom-4 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"
+            ></div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-slate-400">
+                  Niketha's Total Balance
+                </p>
+                <h3
+                  id="totalBalance"
+                  class="text-3xl font-bold mt-2 text-white"
+                >
+                  Rs. 0.00
+                </h3>
+              </div>
+              <div
+                class="p-4 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20"
+              >
+                <i class="fa-solid fa-scale-balanced text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-xs text-slate-400">
+              <span
+                class="text-emerald-400 font-semibold flex items-center mr-1.5"
+                ><i class="fa-solid fa-arrow-trend-up mr-1"></i> Net Worth</span
+              >
+              Calculated from active records
+            </div>
+          </div>
+
+          <!-- Total Income Card -->
+          <div
+            class="bg-slate-800/90 border border-slate-700/70 p-6 rounded-2xl shadow-xl relative overflow-hidden group hover:border-slate-600 transition"
+          >
+            <div
+              class="absolute -right-4 -bottom-4 w-28 h-28 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition"
+            ></div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-slate-400">Total Income</p>
+                <h3
+                  id="totalIncome"
+                  class="text-3xl font-bold mt-2 text-emerald-400"
+                >
+                  Rs. 0.00
+                </h3>
+              </div>
+              <div
+                class="p-4 bg-blue-500/10 text-blue-400 rounded-2xl border border-blue-500/20"
+              >
+                <i class="fa-solid fa-arrow-down-long text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-xs text-slate-400">
+              <span class="text-blue-400 font-semibold flex items-center mr-1.5"
+                ><i class="fa-solid fa-circle-check mr-1"></i> Inflows</span
+              >
+              Total earnings recorded
+            </div>
+          </div>
+
+          <!-- Total Expenses Card -->
+          <div
+            class="bg-slate-800/90 border border-slate-700/70 p-6 rounded-2xl shadow-xl relative overflow-hidden group hover:border-slate-600 transition"
+          >
+            <div
+              class="absolute -right-4 -bottom-4 w-28 h-28 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition"
+            ></div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-slate-400">Total Expenses</p>
+                <h3
+                  id="totalExpense"
+                  class="text-3xl font-bold mt-2 text-rose-400"
+                >
+                  Rs. 0.00
+                </h3>
+              </div>
+              <div
+                class="p-4 bg-rose-500/10 text-rose-400 rounded-2xl border border-rose-500/20"
+              >
+                <i class="fa-solid fa-arrow-up-long text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-xs text-slate-400">
+              <span class="text-rose-400 font-semibold flex items-center mr-1.5"
+                ><i class="fa-solid fa-chart-pie mr-1"></i> Outflows</span
+              >
+              Total spending recorded
+            </div>
+          </div>
+        </section>
+
+        <!-- Quick Chart & Quick Info Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Analytics Chart Card -->
+          <div
+            class="bg-slate-800/90 border border-slate-700/70 p-6 rounded-2xl shadow-xl flex flex-col justify-between"
+          >
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                  <i class="fa-solid fa-chart-pie mr-2 text-emerald-400"></i>
+                  Expense Breakdown
+                </h3>
+              </div>
+              <p class="text-xs text-slate-400 mb-6">
+                Distribution of expenses across categories.
+              </p>
+            </div>
+            <div class="relative w-full h-72 flex items-center justify-center">
+              <canvas id="expenseChart"></canvas>
+              <div
+                id="noChartData"
+                class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-800/80 backdrop-blur-sm rounded-xl"
+              >
+                <i class="fa-solid fa-chart-simple text-3xl mb-2"></i>
+                <p class="text-sm font-medium">No expense data available</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Welcome / Quick Actions Card -->
+          <div
+            class="bg-slate-800/90 border border-slate-700/70 p-6 rounded-2xl shadow-xl flex flex-col justify-between"
+          >
+            <div>
+              <h3 class="text-lg font-bold text-white flex items-center mb-2">
+                <i
+                  class="fa-solid fa-wand-magic-sparkles mr-2 text-emerald-400"
+                ></i>
+                Welcome back, Niketha!
+              </h3>
+              <p class="text-xs text-slate-400 mb-6">
+                Niketha's Finance Dashboard helps you keep track of your income,
+                expenses, custom categories, and bank-style passbook statements.
+              </p>
+
+              <div class="space-y-4">
+                <div
+                  class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/60 flex items-center justify-between"
+                >
+                  <div class="flex items-center space-x-3">
+                    <div
+                      class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg"
+                    >
+                      <i class="fa-solid fa-plus text-lg"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-semibold text-slate-200">
+                        Add Transactions
+                      </h4>
+                      <p class="text-xs text-slate-400">
+                        Record incomes and expenses instantly
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onclick="switchTab('transactions')"
+                    class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold rounded-lg transition"
+                  >
+                    Go
+                  </button>
+                </div>
+
+                <div
+                  class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/60 flex items-center justify-between"
+                >
+                  <div class="flex items-center space-x-3">
+                    <div class="p-3 bg-teal-500/10 text-teal-400 rounded-lg">
+                      <i class="fa-solid fa-book text-lg"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-semibold text-slate-200">
+                        Passbook Statement
+                      </h4>
+                      <p class="text-xs text-slate-400">
+                        View running balances like a bank book
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onclick="switchTab('passbook')"
+                    class="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-slate-950 text-xs font-bold rounded-lg transition"
+                  >
+                    Go
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 2: TRANSACTIONS (ADD & MANAGE) ================= -->
+      <div id="tabContent-transactions" class="tab-content hidden space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Add Transaction Form Container -->
+          <div
+            class="lg:col-span-1 bg-slate-800/90 border border-slate-700/70 p-6 rounded-2xl shadow-xl h-fit"
+          >
+            <div class="flex items-center justify-between mb-6">
+              <h3
+                id="formTitle"
+                class="text-lg font-bold text-white flex items-center"
+              >
+                <i class="fa-solid fa-circle-plus mr-2 text-emerald-400"></i>
+                New Transaction
+              </h3>
+              <button
+                id="resetFormBtn"
+                type="button"
+                class="text-xs text-slate-400 hover:text-white hidden transition underline"
+              >
+                Cancel Edit
+              </button>
+            </div>
+
+            <form id="transactionForm" class="space-y-4">
+              <input type="hidden" id="editIndex" value="-1" />
+
+              <!-- Type Selector -->
+              <div
+                class="flex space-x-4 bg-slate-900/60 p-1.5 rounded-xl border border-slate-700"
+              >
+                <button
+                  type="button"
+                  id="typeExpenseBtn"
+                  onclick="setTransactionType('expense')"
+                  class="flex-1 py-2 text-sm font-semibold rounded-lg transition bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                >
+                  <i class="fa-solid fa-arrow-down mr-1"></i> Expense
+                </button>
+                <button
+                  type="button"
+                  id="typeIncomeBtn"
+                  onclick="setTransactionType('income')"
+                  class="flex-1 py-2 text-sm font-semibold rounded-lg transition text-slate-400 hover:text-white"
+                >
+                  <i class="fa-solid fa-arrow-up mr-1"></i> Income
+                </button>
+              </div>
+
+              <!-- Description / Title -->
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1"
+                  >Description / Title</label
+                >
+                <input
+                  type="text"
+                  id="txDescription"
+                  required
+                  placeholder="e.g. Grocery, Salary..."
+                  class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <!-- Amount -->
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1"
+                  >Amount</label
+                >
+                <div class="relative">
+                  <span
+                    id="currencySymbolPrefix"
+                    class="absolute left-3.5 top-2.5 text-slate-400 text-sm font-semibold"
+                    >Rs.
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    id="txAmount"
+                    required
+                    placeholder="0.00"
+                    class="w-full bg-slate-900/80 border border-slate-700 rounded-xl pl-12 pr-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <!-- Category -->
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1"
+                  >Category</label
+                >
+                <select
+                  id="txCategory"
+                  required
+                  class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <!-- Populated dynamically based on Type -->
+                </select>
+              </div>
+
+              <!-- Date -->
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1"
+                  >Date</label
+                >
+                <input
+                  type="date"
+                  id="txDate"
+                  required
+                  class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <!-- Submit Button -->
+              <div class="pt-2">
+                <button
+                  type="submit"
+                  id="submitBtn"
+                  class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-semibold py-3 px-6 rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center space-x-2"
+                >
+                  <i class="fa-solid fa-plus"></i>
+                  <span id="submitBtnText">Add Transaction</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Transactions Table Container -->
+          <div
+            class="lg:col-span-2 bg-slate-800/90 border border-slate-700/70 rounded-2xl shadow-xl overflow-hidden flex flex-col"
+          >
+            <div
+              class="p-6 border-b border-slate-700/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+            >
+              <div>
+                <h3 class="text-lg font-bold text-white flex items-center">
+                  <i class="fa-solid fa-receipt mr-2 text-emerald-400"></i>
+                  Transaction History
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  Search, filter, edit or delete records.
+                </p>
+              </div>
+
+              <!-- Filter & Search Controls -->
+              <div class="flex flex-wrap items-center gap-3">
+                <div class="relative">
+                  <span class="absolute left-3.5 top-2.5 text-slate-400 text-sm"
+                    ><i class="fa-solid fa-search"></i
+                  ></span>
+                  <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Search..."
+                    class="bg-slate-900/80 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-48"
+                  />
+                </div>
+
+                <div
+                  class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-700"
+                >
+                  <button
+                    onclick="setFilterType('all')"
+                    id="filterAllBtn"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 transition"
+                  >
+                    All
+                  </button>
+                  <button
+                    onclick="setFilterType('income')"
+                    id="filterIncomeBtn"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition"
+                  >
+                    Inc
+                  </button>
+                  <button
+                    onclick="setFilterType('expense')"
+                    id="filterExpenseBtn"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition"
+                  >
+                    Exp
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto flex-1">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr
+                    class="bg-slate-900/50 border-b border-slate-700/60 text-xs font-semibold text-slate-400 uppercase tracking-wider"
+                  >
+                    <th class="py-4 px-6">Description</th>
+                    <th class="py-4 px-6">Category</th>
+                    <th class="py-4 px-6">Date</th>
+                    <th class="py-4 px-6">Type</th>
+                    <th class="py-4 px-6 text-right">Amount</th>
+                    <th class="py-4 px-6 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="transactionTableBody"
+                  class="divide-y divide-slate-700/50 text-sm"
+                >
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              id="emptyState"
+              class="hidden flex flex-col items-center justify-center py-16 px-4 text-center"
+            >
+              <div
+                class="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center text-slate-400 mb-4 text-xl"
+              >
+                <i class="fa-solid fa-folder-open"></i>
+              </div>
+              <h4 class="text-base font-semibold text-slate-200">
+                No transactions found
+              </h4>
+              <p class="text-xs text-slate-400 mt-1 max-w-sm">
+                Add your first transaction using the form on the left.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: PASSBOOK SUMMARY ================= -->
+      <div id="tabContent-passbook" class="tab-content hidden space-y-6">
+        <div
+          class="bg-slate-800/90 border border-slate-700/70 p-6 rounded-2xl shadow-xl"
+        >
+          <div
+            class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6"
+          >
+            <div>
+              <h3 class="text-xl font-bold text-white flex items-center">
+                <i class="fa-solid fa-book-open mr-2 text-teal-400"></i> Bank
+                Passbook Statement
+              </h3>
+              <p class="text-xs text-slate-400 mt-1">
+                Chronological account statement showing running balance after
+                every transaction.
+              </p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <button
+                onclick="window.print()"
+                class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-xl transition flex items-center space-x-2"
+              >
+                <i class="fa-solid fa-print"></i>
+                <span>Print Statement</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-700/70">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr
+                  class="bg-slate-900/80 border-b border-slate-700 text-xs font-semibold text-slate-400 uppercase tracking-wider"
+                >
+                  <th class="py-4 px-6">Date</th>
+                  <th class="py-4 px-6">Description / Particulars</th>
+                  <th class="py-4 px-6">Category</th>
+                  <th class="py-4 px-6 text-right">Deposit (+)</th>
+                  <th class="py-4 px-6 text-right">Withdrawal (-)</th>
+                  <th class="py-4 px-6 text-right font-bold text-slate-200">
+                    Running Balance
+                  </th>
+                </tr>
+              </thead>
+              <tbody
+                id="passbookTableBody"
+                class="divide-y divide-slate-700/50 text-sm"
+              >
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <div
+            id="passbookEmpty"
+            class="hidden flex flex-col items-center justify-center py-16 px-4 text-center"
+          >
+            <div
+              class="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center text-slate-400 mb-4 text-xl"
+            >
+              <i class="fa-solid fa-file-invoice"></i>
+            </div>
+            <h4 class="text-base font-semibold text-slate-200">
+              No passbook records
+            </h4>
+            <p class="text-xs text-slate-400 mt-1">
+              Add transactions to generate your running bank passbook statement.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 4: CATEGORIES MANAGEMENT ================= -->
+      <div id="tabContent-categories" class="tab-content hidden space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Add / Edit Category Form -->
+          <div
+            class="bg-slate-800/90 border border-slate-700/70 p-6 rounded-2xl shadow-xl h-fit"
+          >
+            <div class="flex items-center justify-between mb-6">
+              <h3
+                id="categoryFormTitle"
+                class="text-lg font-bold text-white flex items-center"
+              >
+                <i class="fa-solid fa-circle-plus mr-2 text-emerald-400"></i>
+                Add New Category
+              </h3>
+              <button
+                id="cancelCategoryEditBtn"
+                type="button"
+                class="text-xs text-slate-400 hover:text-white hidden transition underline"
+              >
+                Cancel Edit
+              </button>
+            </div>
+
+            <form id="categoryForm" class="space-y-4">
+              <input type="hidden" id="editCategoryOldName" value="" />
+              <input type="hidden" id="editCategoryType" value="" />
+
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1"
+                  >Category Type</label
+                >
+                <select
+                  id="catTypeInput"
+                  required
+                  class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="expense">Expense Category</option>
+                  <option value="income">Income Category</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1"
+                  >Category Name</label
+                >
+                <input
+                  type="text"
+                  id="catNameInput"
+                  required
+                  placeholder="e.g. Subscriptions, Investments..."
+                  class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div class="pt-2">
+                <button
+                  type="submit"
+                  id="catSubmitBtn"
+                  class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-semibold py-3 px-6 rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center space-x-2"
+                >
+                  <i class="fa-solid fa-plus"></i>
+                  <span id="catSubmitBtnText">Add Category</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Categories List -->
+          <div
+            class="bg-slate-800/90 border border-slate-700/70 p-6 rounded-2xl shadow-xl space-y-6"
+          >
+            <h3 class="text-lg font-bold text-white flex items-center">
+              <i class="fa-solid fa-tags mr-2 text-emerald-400"></i> Manage
+              Categories
+            </h3>
+            <p class="text-xs text-slate-400">
+              Add, edit or remove custom categories used across your
+              transactions and analytics.
+            </p>
+
+            <div class="space-y-4">
+              <div>
+                <h4
+                  class="text-sm font-semibold text-rose-400 mb-2 flex items-center"
+                >
+                  <i class="fa-solid fa-arrow-up-long mr-1.5"></i> Expense
+                  Categories
+                </h4>
+                <div id="expenseCategoriesList" class="flex flex-wrap gap-2">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-slate-700/60">
+                <h4
+                  class="text-sm font-semibold text-emerald-400 mb-2 flex items-center"
+                >
+                  <i class="fa-solid fa-arrow-down-long mr-1.5"></i> Income
+                  Categories
+                </h4>
+                <div id="incomeCategoriesList" class="flex flex-wrap gap-2">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer
+      class="bg-slate-800/40 border-t border-slate-800 py-6 mt-12 text-center text-xs text-slate-500"
+    >
+      <p>
+        &copy; 2026 FinPulse Money Management App for Niketha. All rights
+        reserved. Data securely saved in LocalStorage.
+      </p>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+      // Categories definition stored in localStorage or default
+      let categories = JSON.parse(
+        localStorage.getItem("finpulse_niketha_categories"),
+      ) || {
+        expense: [
+          "Food & Dining",
+          "Transport",
+          "Bills & Utilities",
+          "Entertainment",
+          "Shopping",
+          "Health",
+          "Education",
+          "Other Expense",
+        ],
+        income: ["Salary", "Freelance", "Investments", "Gifts", "Other Income"],
+      };
+
+      // Transactions initialized for Niketha
+      let transactions = JSON.parse(
+        localStorage.getItem("finpulse_niketha_transactions"),
+      ) || [
+        {
+          id: "1",
+          description: "Monthly Salary",
+          amount: 220000.0,
+          category: "Salary",
+          date: "2026-06-01",
+          type: "income",
+        },
+        {
+          id: "2",
+          description: "Supermarket Groceries",
+          amount: 18500.0,
+          category: "Food & Dining",
+          date: "2026-06-03",
+          type: "expense",
+        },
+        {
+          id: "3",
+          description: "Electricity & Water Bill",
+          amount: 7400.5,
+          category: "Bills & Utilities",
+          date: "2026-06-05",
+          type: "expense",
+        },
+        {
+          id: "4",
+          description: "Web Development Project",
+          amount: 75000.0,
+          category: "Freelance",
+          date: "2026-06-06",
+          type: "income",
+        },
+        {
+          id: "5",
+          description: "Fuel & Transport",
+          amount: 9500.0,
+          category: "Transport",
+          date: "2026-06-07",
+          type: "expense",
+        },
+      ];
+
+      let currentTab = "dashboard";
+      let currentType = "expense";
+      let currentFilter = "all";
+      let currentSearchQuery = "";
+      let currentCurrency =
+        localStorage.getItem("finpulse_niketha_currency") || "Rs. ";
+      let expenseChartInstance = null;
+
+      // DOM Elements
+      const currencySelector = document.getElementById("currencySelector");
+      const currencySymbolPrefix = document.getElementById(
+        "currencySymbolPrefix",
+      );
+      const transactionForm = document.getElementById("transactionForm");
+      const txDescription = document.getElementById("txDescription");
+      const txAmount = document.getElementById("txAmount");
+      const txCategory = document.getElementById("txCategory");
+      const txDate = document.getElementById("txDate");
+      const editIndexInput = document.getElementById("editIndex");
+      const formTitle = document.getElementById("formTitle");
+      const submitBtnText = document.getElementById("submitBtnText");
+      const resetFormBtn = document.getElementById("resetFormBtn");
+      const transactionTableBody = document.getElementById(
+        "transactionTableBody",
+      );
+      const emptyState = document.getElementById("emptyState");
+      const searchInput = document.getElementById("searchInput");
+
+      // Category Form elements
+      const categoryForm = document.getElementById("categoryForm");
+      const catTypeInput = document.getElementById("catTypeInput");
+      const catNameInput = document.getElementById("catNameInput");
+      const editCategoryOldName = document.getElementById(
+        "editCategoryOldName",
+      );
+      const editCategoryType = document.getElementById("editCategoryType");
+      const categoryFormTitle = document.getElementById("categoryFormTitle");
+      const catSubmitBtnText = document.getElementById("catSubmitBtnText");
+      const cancelCategoryEditBtn = document.getElementById(
+        "cancelCategoryEditBtn",
+      );
+
+      // Initialize App on Load
+      window.addEventListener("DOMContentLoaded", () => {
+        const today = new Date().toISOString().split("T")[0];
+        txDate.value = today;
+
+        currencySelector.value = currentCurrency;
+        currencySymbolPrefix.textContent = currentCurrency;
+
+        updateCategoryDropdown();
+        renderApp();
+
+        // Event Listeners
+        currencySelector.addEventListener("change", (e) => {
+          currentCurrency = e.target.value;
+          currencySymbolPrefix.textContent = currentCurrency;
+          localStorage.setItem("finpulse_niketha_currency", currentCurrency);
+          renderApp();
+        });
+
+        searchInput.addEventListener("input", (e) => {
+          currentSearchQuery = e.target.value.toLowerCase().trim();
+          renderTransactionsTable();
+        });
+
+        transactionForm.addEventListener("submit", handleFormSubmit);
+        resetFormBtn.addEventListener("click", resetForm);
+        categoryForm.addEventListener("submit", handleCategoryFormSubmit);
+        cancelCategoryEditBtn.addEventListener("click", resetCategoryForm);
+      });
+
+      // Tab Switching
+      function switchTab(tabId) {
+        currentTab = tabId;
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((el) => el.classList.add("hidden"));
+        document.querySelectorAll(".tab-btn").forEach((el) => {
+          el.className =
+            "tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 text-slate-300 hover:text-white hover:bg-slate-700/60";
+        });
+
+        document
+          .getElementById(`tabContent-${tabId}`)
+          .classList.remove("hidden");
+        const activeBtn = document.getElementById(`tabBtn-${tabId}`);
+        activeBtn.className =
+          "tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 bg-emerald-500 text-slate-950 shadow-md";
+
+        if (tabId === "dashboard") {
+          renderExpenseChart();
+        } else if (tabId === "passbook") {
+          renderPassbookTable();
+        } else if (tabId === "categories") {
+          renderCategoriesManager();
+        }
+      }
+
+      // Set Transaction Type
+      function setTransactionType(type) {
+        currentType = type;
+        const expenseBtn = document.getElementById("typeExpenseBtn");
+        const incomeBtn = document.getElementById("typeIncomeBtn");
+
+        if (type === "expense") {
+          expenseBtn.className =
+            "flex-1 py-2 text-sm font-semibold rounded-lg transition bg-rose-500/20 text-rose-400 border border-rose-500/30";
+          incomeBtn.className =
+            "flex-1 py-2 text-sm font-semibold rounded-lg transition text-slate-400 hover:text-white";
+        } else {
+          incomeBtn.className =
+            "flex-1 py-2 text-sm font-semibold rounded-lg transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+          expenseBtn.className =
+            "flex-1 py-2 text-sm font-semibold rounded-lg transition text-slate-400 hover:text-white";
+        }
+
+        updateCategoryDropdown();
+      }
+
+      // Update Category Dropdown
+      function updateCategoryDropdown() {
+        txCategory.innerHTML = "";
+        const cats = categories[currentType] || [];
+        cats.forEach((cat) => {
+          const opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat;
+          txCategory.appendChild(opt);
+        });
+      }
+
+      // Set Filter Type
+      function setFilterType(filter) {
+        currentFilter = filter;
+        const btnAll = document.getElementById("filterAllBtn");
+        const btnInc = document.getElementById("filterIncomeBtn");
+        const btnExp = document.getElementById("filterExpenseBtn");
+
+        [btnAll, btnInc, btnExp].forEach((b) => {
+          b.className =
+            "px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition";
+        });
+
+        if (filter === "all") {
+          btnAll.className =
+            "px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 transition";
+        } else if (filter === "income") {
+          btnInc.className =
+            "px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 transition";
+        } else {
+          btnExp.className =
+            "px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 transition";
+        }
+
+        renderTransactionsTable();
+      }
+
+      // Handle Transaction Submit
+      function handleFormSubmit(e) {
+        e.preventDefault();
+
+        const description = txDescription.value.trim();
+        const amount = parseFloat(txAmount.value);
+        const category = txCategory.value;
+        const date = txDate.value;
+        const editId = editIndexInput.value;
+
+        if (!description || isNaN(amount) || amount <= 0 || !date) {
+          showToast("Please fill in all fields correctly.", "error");
+          return;
+        }
+
+        if (editId === "-1") {
+          const newTx = {
+            id: Date.now().toString(),
+            description,
+            amount,
+            category,
+            date,
+            type: currentType,
+          };
+          transactions.unshift(newTx);
+          showToast("Transaction added successfully!", "success");
+        } else {
+          const index = transactions.findIndex((t) => t.id === editId);
+          if (index !== -1) {
+            transactions[index] = {
+              ...transactions[index],
+              description,
+              amount,
+              category,
+              date,
+              type: currentType,
+            };
+            showToast("Transaction updated successfully!", "success");
+          }
+          resetForm();
+        }
+
+        saveAndRefresh();
+        transactionForm.reset();
+        txDate.value = new Date().toISOString().split("T")[0];
+        setTransactionType("expense");
+      }
+
+      function editTransaction(id) {
+        const tx = transactions.find((t) => t.id === id);
+        if (!tx) return;
+
+        editIndexInput.value = tx.id;
+        txDescription.value = tx.description;
+        txAmount.value = tx.amount;
+        txDate.value = tx.date;
+
+        setTransactionType(tx.type);
+        txCategory.value = tx.category;
+
+        formTitle.innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-amber-400"></i> Edit Transaction`;
+        submitBtnText.textContent = "Update Transaction";
+        resetFormBtn.classList.remove("hidden");
+
+        transactionForm.scrollIntoView({ behavior: "smooth" });
+      }
+
+      function resetForm() {
+        editIndexInput.value = "-1";
+        transactionForm.reset();
+        txDate.value = new Date().toISOString().split("T")[0];
+        setTransactionType("expense");
+        formTitle.innerHTML = `<i class="fa-solid fa-circle-plus mr-2 text-emerald-400"></i> New Transaction`;
+        submitBtnText.textContent = "Add Transaction";
+        resetFormBtn.classList.add("hidden");
+      }
+
+      function deleteTransaction(id) {
+        if (
+          window.confirm
+            ? confirm("Are you sure you want to delete this transaction?")
+            : true
+        ) {
+          transactions = transactions.filter((t) => t.id !== id);
+          showToast("Transaction deleted successfully!", "success");
+          saveAndRefresh();
+        }
+      }
+
+      // Category Management Functions
+      function handleCategoryFormSubmit(e) {
+        e.preventDefault();
+        const type = catTypeInput.value;
+        const name = catNameInput.value.trim();
+        const oldName = editCategoryOldName.value;
+
+        if (!name) return;
+
+        // Check if already exists in that type
+        if (!oldName && categories[type].includes(name)) {
+          showToast("Category already exists!", "error");
+          return;
+        }
+
+        if (oldName) {
+          // Editing existing category
+          const idx = categories[type].indexOf(oldName);
+          if (idx !== -1) {
+            categories[type][idx] = name;
+            // Also update transactions using this category
+            transactions.forEach((t) => {
+              if (t.category === oldName && t.type === type) {
+                t.category = name;
+              }
+            });
+            showToast("Category updated successfully!", "success");
+          }
+          resetCategoryForm();
+        } else {
+          // Adding new category
+          categories[type].push(name);
+          showToast("Category added successfully!", "success");
+          catNameInput.value = "";
+        }
+
+        saveCategoriesAndRefresh();
+      }
+
+      function editCategory(type, name) {
+        catTypeInput.value = type;
+        catNameInput.value = name;
+        editCategoryOldName.value = name;
+        editCategoryType.value = type;
+
+        categoryFormTitle.innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-amber-400"></i> Edit Category`;
+        catSubmitBtnText.textContent = "Update Category";
+        cancelCategoryEditBtn.classList.remove("hidden");
+        categoryForm.scrollIntoView({ behavior: "smooth" });
+      }
+
+      function resetCategoryForm() {
+        categoryForm.reset();
+        editCategoryOldName.value = "";
+        editCategoryType.value = "";
+        categoryFormTitle.innerHTML = `<i class="fa-solid fa-circle-plus mr-2 text-emerald-400"></i> Add New Category`;
+        catSubmitBtnText.textContent = "Add Category";
+        cancelCategoryEditBtn.classList.add("hidden");
+      }
+
+      function deleteCategory(type, name) {
+        if (categories[type].length <= 1) {
+          showToast("You must keep at least one category.", "error");
+          return;
+        }
+
+        if (window.confirm ? confirm(`Delete category "${name}"?`) : true) {
+          categories[type] = categories[type].filter((c) => c !== name);
+          showToast("Category deleted successfully!", "success");
+          saveCategoriesAndRefresh();
+        }
+      }
+
+      function saveCategoriesAndRefresh() {
+        localStorage.setItem(
+          "finpulse_niketha_categories",
+          JSON.stringify(categories),
+        );
+        updateCategoryDropdown();
+        renderApp();
+      }
+
+      function saveAndRefresh() {
+        localStorage.setItem(
+          "finpulse_niketha_transactions",
+          JSON.stringify(transactions),
+        );
+        renderApp();
+      }
+
+      // Render Entire Application
+      function renderApp() {
+        renderSummaryCards();
+        renderTransactionsTable();
+        renderPassbookTable();
+        renderCategoriesManager();
+        if (currentTab === "dashboard") {
+          renderExpenseChart();
+        }
+      }
+
+      // Summary Cards
+      function renderSummaryCards() {
+        let totalIncome = 0;
+        let totalExpense = 0;
+
+        transactions.forEach((t) => {
+          if (t.type === "income") {
+            totalIncome += t.amount;
+          } else {
+            totalExpense += t.amount;
+          }
+        });
+
+        const totalBalance = totalIncome - totalExpense;
+
+        document.getElementById("totalIncome").textContent =
+          `${currentCurrency}${totalIncome.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById("totalExpense").textContent =
+          `${currentCurrency}${totalExpense.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        const balanceEl = document.getElementById("totalBalance");
+        balanceEl.textContent = `${currentCurrency}${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (totalBalance < 0) {
+          balanceEl.className = "text-3xl font-bold mt-2 text-rose-400";
+        } else {
+          balanceEl.className = "text-3xl font-bold mt-2 text-white";
+        }
+      }
+
+      // Transactions Table
+      function renderTransactionsTable() {
+        let filtered = transactions.filter((t) => {
+          if (currentFilter !== "all" && t.type !== currentFilter) return false;
+          if (
+            currentSearchQuery &&
+            !t.description.toLowerCase().includes(currentSearchQuery) &&
+            !t.category.toLowerCase().includes(currentSearchQuery)
+          ) {
+            return false;
+          }
+          return true;
+        });
+
+        transactionTableBody.innerHTML = "";
+
+        if (filtered.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        } else {
+          emptyState.classList.add("hidden");
+        }
+
+        filtered.forEach((t) => {
+          const tr = document.createElement("tr");
+          tr.className =
+            "hover:bg-slate-700/30 transition border-b border-slate-700/40";
+
+          const isIncome = t.type === "income";
+          const amountClass = isIncome
+            ? "text-emerald-400 font-semibold"
+            : "text-slate-200 font-semibold";
+          const typeBadge = isIncome
+            ? `<span class="px-2.5 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">Income</span>`
+            : `<span class="px-2.5 py-1 text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full">Expense</span>`;
+
+          tr.innerHTML = `
+                    <td class="py-4 px-6 font-medium text-white">${escapeHtml(t.description)}</td>
+                    <td class="py-4 px-6 text-slate-300"><span class="px-2.5 py-1 text-xs rounded-lg bg-slate-700/60 border border-slate-600/50">${escapeHtml(t.category)}</span></td>
+                    <td class="py-4 px-6 text-slate-400 text-xs">${escapeHtml(t.date)}</td>
+                    <td class="py-4 px-6">${typeBadge}</td>
+                    <td class="py-4 px-6 text-right ${amountClass}">${isIncome ? "+" : "-"}${currentCurrency}${t.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td class="py-4 px-6 text-center">
+                        <div class="flex items-center justify-center space-x-2">
+                            <button onclick="editTransaction('${t.id}')" class="p-1.5 bg-slate-700/50 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 rounded-lg transition" title="Edit">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteTransaction('${t.id}')" class="p-1.5 bg-slate-700/50 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 rounded-lg transition" title="Delete">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+          transactionTableBody.appendChild(tr);
+        });
+      }
+
+      // Passbook Table (Chronological Running Balance)
+      function renderPassbookTable() {
+        const passbookBody = document.getElementById("passbookTableBody");
+        const passbookEmpty = document.getElementById("passbookEmpty");
+        passbookBody.innerHTML = "";
+
+        if (transactions.length === 0) {
+          passbookEmpty.classList.remove("hidden");
+          return;
+        } else {
+          passbookEmpty.classList.add("hidden");
+        }
+
+        // Sort chronologically ascending for bank passbook calculation
+        let sorted = [...transactions].sort(
+          (a, b) => new Date(a.date) - new Date(b.date),
+        );
+        let runningBalance = 0;
+
+        sorted.forEach((t) => {
+          const isIncome = t.type === "income";
+          if (isIncome) {
+            runningBalance += t.amount;
+          } else {
+            runningBalance -= t.amount;
+          }
+
+          const tr = document.createElement("tr");
+          tr.className =
+            "hover:bg-slate-700/30 transition border-b border-slate-700/40";
+
+          tr.innerHTML = `
+                    <td class="py-4 px-6 text-slate-400 text-xs font-mono">${escapeHtml(t.date)}</td>
+                    <td class="py-4 px-6 font-medium text-white">${escapeHtml(t.description)}</td>
+                    <td class="py-4 px-6 text-slate-300"><span class="px-2.5 py-1 text-xs rounded-lg bg-slate-700/60 border border-slate-600/50">${escapeHtml(t.category)}</span></td>
+                    <td class="py-4 px-6 text-right font-semibold text-emerald-400">${isIncome ? currentCurrency + t.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "-"}</td>
+                    <td class="py-4 px-6 text-right font-semibold text-rose-400">${!isIncome ? currentCurrency + t.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "-"}</td>
+                    <td class="py-4 px-6 text-right font-bold font-mono ${runningBalance < 0 ? "text-rose-400" : "text-slate-100"}">${currentCurrency}${runningBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                `;
+          passbookBody.appendChild(tr);
+        });
+      }
+
+      // Categories Manager View
+      function renderCategoriesManager() {
+        const expList = document.getElementById("expenseCategoriesList");
+        const incList = document.getElementById("incomeCategoriesList");
+
+        expList.innerHTML = "";
+        incList.innerHTML = "";
+
+        (categories.expense || []).forEach((cat) => {
+          const badge = document.createElement("div");
+          badge.className =
+            "flex items-center space-x-2 bg-slate-900/80 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-200";
+          badge.innerHTML = `
+                    <span>${escapeHtml(cat)}</span>
+                    <div class="flex items-center space-x-1 ml-2">
+                        <button onclick="editCategory('expense', '${escapeHtml(cat)}')" class="text-slate-400 hover:text-amber-400 p-1"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                        <button onclick="deleteCategory('expense', '${escapeHtml(cat)}')" class="text-slate-400 hover:text-rose-400 p-1"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                    </div>
+                `;
+          expList.appendChild(badge);
+        });
+
+        (categories.income || []).forEach((cat) => {
+          const badge = document.createElement("div");
+          badge.className =
+            "flex items-center space-x-2 bg-slate-900/80 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-200";
+          badge.innerHTML = `
+                    <span>${escapeHtml(cat)}</span>
+                    <div class="flex items-center space-x-1 ml-2">
+                        <button onclick="editCategory('income', '${escapeHtml(cat)}')" class="text-slate-400 hover:text-amber-400 p-1"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                        <button onclick="deleteCategory('income', '${escapeHtml(cat)}')" class="text-slate-400 hover:text-rose-400 p-1"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                    </div>
+                `;
+          incList.appendChild(badge);
+        });
+      }
+
+      // Expense Chart
+      function renderExpenseChart() {
+        const canvasEl = document.getElementById("expenseChart");
+        if (!canvasEl) return;
+        const ctx = canvasEl.getContext("2d");
+        const noChartData = document.getElementById("noChartData");
+
+        const expenseMap = {};
+        transactions
+          .filter((t) => t.type === "expense")
+          .forEach((t) => {
+            expenseMap[t.category] = (expenseMap[t.category] || 0) + t.amount;
+          });
+
+        const labels = Object.keys(expenseMap);
+        const data = Object.values(expenseMap);
+
+        if (labels.length === 0) {
+          noChartData.classList.remove("hidden");
+          if (expenseChartInstance) {
+            expenseChartInstance.destroy();
+            expenseChartInstance = null;
+          }
+          return;
+        } else {
+          noChartData.classList.add("hidden");
+        }
+
+        const chartConfig = {
+          type: "doughnut",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                data: data,
+                backgroundColor: [
+                  "#f43f5e",
+                  "#3b82f6",
+                  "#10b981",
+                  "#f59e0b",
+                  "#8b5cf6",
+                  "#ec4899",
+                  "#06b6d4",
+                  "#64748b",
+                ],
+                borderWidth: 2,
+                borderColor: "#1e293b",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  boxWidth: 12,
+                  font: { size: 11, family: "Inter" },
+                  color: "#94a3b8",
+                },
+              },
+            },
+            cutout: "70%",
+          },
+        };
+
+        if (expenseChartInstance) {
+          expenseChartInstance.destroy();
+        }
+        expenseChartInstance = new Chart(ctx, chartConfig);
+      }
+
+      // Toast Helper
+      function showToast(message, type = "success") {
+        const toast = document.getElementById("toast");
+        const toastMessage = document.getElementById("toastMessage");
+        const toastIcon = document.getElementById("toastIcon");
+
+        toastMessage.textContent = message;
+        if (type === "error") {
+          toast.className =
+            "fixed bottom-5 right-5 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-rose-600 text-white px-6 py-3 rounded-xl shadow-xl flex items-center space-x-3";
+          toastIcon.className = "fa-solid fa-triangle-exclamation text-lg";
+        } else {
+          toast.className =
+            "fixed bottom-5 right-5 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-xl flex items-center space-x-3";
+          toastIcon.className = "fa-solid fa-check-circle text-lg";
+        }
+
+        setTimeout(() => {
+          toast.className =
+            "fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-xl flex items-center space-x-3";
+        }, 3500);
+      }
+
+      // Escape HTML
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+    </script>
+  </body>
+</html>
