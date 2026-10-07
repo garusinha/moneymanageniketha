@@ -1075,14 +1075,22 @@
       }
 
       // Handle Transaction Submit
+      // Handle Transaction Submit
       async function handleFormSubmit(e) {
         e.preventDefault();
 
-        const description = txDescription.value.trim();
-        const amount = parseFloat(txAmount.value);
-        const category = txCategory.value;
-        const date = txDate.value;
-        const editId = editIndexInput.value;
+        // Ensure DOM elements are fresh
+        const descInput = document.getElementById("txDescription");
+        const amtInput = document.getElementById("txAmount");
+        const catSelect = document.getElementById("txCategory");
+        const dateInput = document.getElementById("txDate");
+        const editInput = document.getElementById("editIndex");
+
+        const description = descInput ? descInput.value.trim() : "";
+        const amount = amtInput ? parseFloat(amtInput.value) : NaN;
+        const category = catSelect ? catSelect.value : "";
+        const date = dateInput ? dateInput.value : "";
+        const editId = editInput ? editInput.value : "-1";
 
         if (
           !description ||
@@ -1091,14 +1099,23 @@
           !date ||
           !category
         ) {
-          showToast("Please fill in all fields correctly.", "error");
+          showToast(
+            "Please fill in all fields correctly, including category.",
+            "error",
+          );
+          return;
+        }
+
+        if (!window.db || !window.firebaseModules) {
+          showToast("Firebase database not initialized.", "error");
           return;
         }
 
         const { collection, addDoc, doc, updateDoc } = window.firebaseModules;
 
         try {
-          if (editId === "-1") {
+          if (editId === "-1" || editId === "") {
+            // Add new transaction to Firestore
             await addDoc(collection(window.db, "transactions"), {
               description,
               amount,
@@ -1109,6 +1126,7 @@
             });
             showToast("Transaction added successfully!", "success");
           } else {
+            // Update existing transaction in Firestore
             const txRef = doc(window.db, "transactions", editId);
             await updateDoc(txRef, {
               description,
@@ -1121,12 +1139,13 @@
             resetForm();
           }
 
-          transactionForm.reset();
-          txDate.value = new Date().toISOString().split("T")[0];
+          if (transactionForm) transactionForm.reset();
+          if (dateInput)
+            dateInput.value = new Date().toISOString().split("T")[0];
           setTransactionType("expense");
         } catch (error) {
           console.error("Error saving transaction: ", error);
-          showToast("Failed to save transaction.", "error");
+          showToast("Failed to save transaction: " + error.message, "error");
         }
       }
 
