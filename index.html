@@ -24,6 +24,53 @@
         },
       };
     </script>
+    <script type="module">
+      // Import Firebase components via CDN for single-file web apps
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+        getDocs,
+        deleteDoc,
+        doc,
+        onSnapshot,
+        query,
+        orderBy,
+      } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+      // Your actual Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyBK4E6JWM8AMuYFJ1CICL6M-RMUGHV_T6c",
+        authDomain: "money-fb2b6.firebaseapp.com",
+        projectId: "money-fb2b6",
+        storageBucket: "money-fb2b6.firebasestorage.app",
+        messagingSenderId: "1045177079210",
+        appId: "1:1045177079210:web:d66210e3c5ba575f6507d3",
+        measurementId: "G-ZXD661VKD9",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const analytics = getAnalytics(app);
+
+      // Attach variables globally so your app functions can use them across devices
+      window.db = db;
+      window.firebaseModules = {
+        collection,
+        addDoc,
+        getDocs,
+        deleteDoc,
+        doc,
+        onSnapshot,
+        query,
+        orderBy,
+      };
+
+      console.log("Firebase connected successfully for Niketha's Money App!");
+    </script>
     <!-- Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- FontAwesome for Icons -->
